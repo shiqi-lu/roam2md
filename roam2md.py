@@ -2,6 +2,10 @@ import os
 import sys
 import re
 
+
+PREFIX = ["", "- ", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " * 16 + "- ", " " * 20 + "- ",
+          " " * 24 + "- ", " " * 28 + "- ", " " * 32 + "- ", " " * 36 + "- ", " " * 40 + "- ", ]
+
 DOUBLE_SQUARE_BRACKET_PATTERN = r"\[\[(.*?)\]\]"
 ALIAS_PATTERN = r"{{alias:\s*\[\[.*\]\]\s*(.*?)}}"
 HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
@@ -28,7 +32,7 @@ def remove_double_square_bracket(line):
 
 
 def equation(line):
-    """行间公式，把前后的$$换成\[\]"""
+    """行间公式不替换，行内公式前后的$$换成$"""
     if len(line) <= 4:
         return line
     if line.startswith("$$") and line.endswith("$$"):
@@ -45,7 +49,7 @@ def equation(line):
         return inline_equation(line)
 
 def inline_equation(line):
-    """行内公式，把前后的$$换成\(\)"""
+    """行内公式，把前后的$$换成$"""
     if line.find("$$") == -1:
         return line
     split_list = line.split("$$")
@@ -77,15 +81,26 @@ def italics(line):
     return basic_inline_format(line, ITALICS_PATTERN, "*")
 
 
+def split_prefix_content(line):
+    for prefix in PREFIX[::-1]:
+        if line.startswith(prefix):
+            return prefix, line[len(prefix):]
+    assert "Can't be here"
+
+
 def main(file_path, level):
     output_path = file_path.replace(".txt", ".md")
     output = ""
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
+            line = line.strip('\n')
+            if not line.strip():
+                continue
+            prefix, line = split_prefix_content(line)
             if not line.strip():
                 continue
             line = remove_double_square_bracket(alias(highlight(italics(equation(line)))))
-            output += line
+            output += prefix + line + '\n'
 
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(output)
