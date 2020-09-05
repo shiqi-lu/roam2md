@@ -2,7 +2,6 @@ import os
 import sys
 import re
 
-
 PREFIX = ["", "- ", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " * 16 + "- ", " " * 20 + "- ",
           " " * 24 + "- ", " " * 28 + "- ", " " * 32 + "- ", " " * 36 + "- ", " " * 40 + "- ", ]
 
@@ -13,7 +12,9 @@ ITALICS_PATTERN = r"__(.*?)__"
 
 code_format = "inherit"
 
+
 def alias(line):
+    """提取alias文字出来"""
     res = re.findall(ALIAS_PATTERN, line)
     if not res:
         return line
@@ -24,6 +25,7 @@ def alias(line):
 
 
 def remove_double_square_bracket(line):
+    """删除双中括号"""
     res = re.findall(DOUBLE_SQUARE_BRACKET_PATTERN, line)
     if not res:
         return line
@@ -49,6 +51,7 @@ def equation(line):
         return line[1:-1]
     else:
         return inline_equation(line)
+
 
 def inline_equation(line):
     """行内公式，把前后的$$换成$"""
@@ -76,34 +79,56 @@ def basic_inline_format(line, PATTERN, style_name):
 
 
 def highlight(line):
+    """替换高亮"""
     return basic_inline_format(line, HIGHLIGHT_PATTERN, "==")
 
 
 def italics(line):
+    """"替换斜体"""
     return basic_inline_format(line, ITALICS_PATTERN, "*")
 
 
 def split_prefix_content(line):
+    """提取前缀，文字，级别"""
     for prefix in PREFIX[::-1]:
         if line.startswith(prefix):
-            return prefix, line[len(prefix):]
+            if len(prefix) == 0:
+                level = 0
+            else:
+                level = (len(prefix) - 2) // 4 + 1
+            return prefix, line[len(prefix):], level
     assert "Can't be here"
 
 
 def main(file_path, level):
-    output_path = file_path.replace(".txt", ".md")
     output = ""
     prefix = ""
+    current_level = 0
+    add_header = ""
     multiline_code = False
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip('\n')
             if not multiline_code:
-                prefix, line = split_prefix_content(line)
+                # 仅在非多行公式中更新前缀、行、等级
+                # 若在多行公式内保持与之前一致
+                prefix, line, current_level = split_prefix_content(line)
+                if current_level == 0:
+                    add_header = ""
+                elif current_level <= level:
+                    prefix = ""
+                    add_header = "\n" + "#" * current_level + " "
+                else:
+                    add_header = ""
+                    prefix = prefix[level * 4:]
+                if prefix == "- ":
+                    prefix = "\n- "
             if not line.strip():
                 continue
             if not multiline_code and line.startswith("```"):
+                # 多行公式开始
                 multiline_code = True
+                add_header = ""
                 codename = line[3:].strip()
                 if code_format == "inherit":
                     output += prefix + f"```{codename}\n\n"
@@ -112,17 +137,19 @@ def main(file_path, level):
                 prefix = " " * len(prefix)
                 continue
             elif multiline_code and line.endswith("```"):
+                # 多行公式结束
                 rest_code = line[:-3]
                 if rest_code:
-                    output += prefix + rest_code + "\n" + prefix + "```" + "\n"
+                    output += prefix + rest_code + "\n" + prefix + "```" + "\n\n"
                 else:
-                    output += prefix + "```" + "\n"
+                    output += prefix + "```" + "\n\n"
                 multiline_code = False
                 continue
             if not multiline_code:
                 line = remove_double_square_bracket(alias(highlight(italics(equation(line)))))
-            output += prefix + line + '\n'
+            output += prefix + add_header + line + '\n'
 
+    output_path = file_path.replace(".txt", ".md")
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(output)
 
@@ -133,12 +160,12 @@ def print_help_and_exit():
 
 
 if __name__ == '__main__':
-    # main("example/one.txt", 0)
+    # main("example/example.txt", 2)
     # exit(0)
     if len(sys.argv) <= 3:
         print_help_and_exit()
 
-    level = sys.argv[1]
+    level = int(sys.argv[1])
     code_format = sys.argv[2]
 
     for path in sys.argv[3:]:
