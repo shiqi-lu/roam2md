@@ -4,7 +4,6 @@ import re
 
 PREFIX = ["", "- ", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " * 16 + "- ", " " * 20 + "- ",
           " " * 24 + "- ", " " * 28 + "- ", " " * 32 + "- ", " " * 36 + "- ", " " * 40 + "- ", ]
-LANGUAGE = ["c++", "java", "js", "javascript", "go", "python"]
 
 DOUBLE_SQUARE_BRACKET_PATTERN = r"\[\[(.*?)\]\]"
 ALIAS_PATTERN = r"{{alias:\s*\[\[.*\]\]\s*(.*?)}}"
@@ -104,7 +103,6 @@ def main(file_path, level):
     current_level = 0
     add_header = ""
     multiline_code = False
-    multiline_code_first_line = False # 用于删除代码块第一行的语言标识
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip('\n')
@@ -128,7 +126,6 @@ def main(file_path, level):
             if not multiline_code and line.startswith("```"):
                 # 多行代码块开始
                 multiline_code = True
-                multiline_code_first_line = True
                 add_header = ""
                 codename = line[3:].strip()
                 # leetcode模式不用前缀，且加一个[]
@@ -146,16 +143,6 @@ def main(file_path, level):
                 continue
             if not multiline_code:
                 line = remove_double_square_bracket(alias(highlight(italics(equation(line)))))
-            if multiline_code_first_line:
-                # 为了标识不同语言，我在代码第一行加了标识，这里去掉这一行标识
-                multiline_code_first_line = False
-                flag = False
-                for lang in LANGUAGE:
-                    if line.lower().find(lang) != -1:
-                        flag = True
-                        break
-                if flag:
-                    continue
 
             output += prefix + add_header + line + '\n'
 
