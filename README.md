@@ -3,10 +3,9 @@ roam2md主要是把Roam Research的笔记转换为显示无误的markdown笔记
 
 # 用法
 1. 新建一个txt文件如example.txt，把要转换的roam内容粘贴到文本中
-2. 运行python脚本`python roam2md.py 0 inherit example.txt ...`，即可把程序转换为对应的markdown文件<br>
+2. 运行python脚本`python roam2md.py 0 example.txt ...`，即可把程序转换为对应的markdown文件<br>
 其中，第一个参数指明了要转换为对应标题样式的级别，支持0~6，0为不转换，<br>
-第二个参数为要代码块中要强制转换成的名字，无特殊需求使用默认inherit，直接读取当前代码块中的定义<br>
-第三个参数及后续为要转换的文件或文件夹
+第二个参数及后续为要转换的文件或文件夹
 
 ![](img.jpeg)
 
