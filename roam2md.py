@@ -10,6 +10,7 @@ ALIAS_PATTERN = r"{{alias:\s*\[\[.*\]\]\s*(.*?)}}"
 HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
 ITALICS_PATTERN = r"__(.*?)__"
 
+
 def alias(line):
     """提取alias文字出来"""
     res = re.findall(ALIAS_PATTERN, line)
@@ -142,6 +143,7 @@ def main(file_path, level):
                 continue
             if not multiline_code:
                 line = remove_double_square_bracket(alias(highlight(italics(equation(line)))))
+
             output += prefix + add_header + line + '\n'
 
     output_path = file_path.replace(".txt", ".md")

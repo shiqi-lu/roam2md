@@ -10,7 +10,6 @@ ALIAS_PATTERN = r"{{alias:\s*\[\[.*\]\]\s*(.*?)}}"
 HIGHLIGHT_PATTERN = r"\^\^(.*?)\^\^"
 ITALICS_PATTERN = r"__(.*?)__"
 
-
 def alias(line):
     """提取alias文字出来"""
     res = re.findall(ALIAS_PATTERN, line)
@@ -115,7 +114,8 @@ def main(file_path, level):
                     add_header = ""
                 elif current_level <= level:
                     prefix = ""
-                    add_header = "\n" + "#" * current_level + " "
+                    # vuepress 需要从第二级标题开始
+                    add_header = "\n" + "#" * (current_level+1) + " "
                 else:
                     add_header = ""
                     prefix = prefix[level * 4:]
@@ -129,17 +129,16 @@ def main(file_path, level):
                 multiline_code = True
                 add_header = ""
                 codename = line[3:].strip()
-                # leetcode模式不用前缀，且加一个[]
-                output += f"\n```{codename} []\n"
-                prefix = ""
+                output += prefix + f"```{codename}\n"
+                prefix = " " * len(prefix.strip('\n'))
                 continue
             elif multiline_code and line.endswith("```"):
                 # 多行代码块结束
                 rest_code = line[:-3]
                 if rest_code:
-                    output += rest_code + "\n" + "```" + "\n\n"
+                    output += prefix + rest_code + "\n" + prefix + "```" + "\n\n"
                 else:
-                    output += "```" + "\n\n"
+                    output += prefix + "```" + "\n\n"
                 multiline_code = False
                 continue
             if not multiline_code:

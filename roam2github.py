@@ -2,8 +2,7 @@ import os
 import sys
 import re
 
-PREFIX = ["", "- ", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " * 16 + "- ",
-          " " * 20 + "- ",
+PREFIX = ["", "- ", " " * 4 + "- ", " " * 8 + "- ", " " * 12 + "- ", " " * 16 + "- ", " " * 20 + "- ",
           " " * 24 + "- ", " " * 28 + "- ", " " * 32 + "- ", " " * 36 + "- ", " " * 40 + "- ", ]
 
 DOUBLE_SQUARE_BRACKET_PATTERN = r"\[\[(.*?)\]\]"
@@ -105,7 +104,6 @@ def main(file_path, level):
     current_level = 0
     add_header = ""
     multiline_code = False
-    multiline_equation = False
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip('\n')
@@ -143,9 +141,9 @@ def main(file_path, level):
                     output += prefix + "```" + "\n\n"
                 multiline_code = False
                 continue
-            # if not multiline_equation and line
             if not multiline_code:
                 line = remove_double_square_bracket(alias(highlight(italics(equation(line)))))
+
             output += prefix + add_header + line + '\n'
 
     output_path = file_path.replace(".txt", ".md")
