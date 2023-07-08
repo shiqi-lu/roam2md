@@ -97,12 +97,13 @@ def split_prefix_content(line):
     assert "Can't be here"
 
 
-def main(file_path, level):
+def main(file_path, level, enable_multi_code):
     output = ""
     prefix = ""
     current_level = 0
     add_header = ""
     multiline_code = False
+    multi_code = False # 多代码块组合
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip('\n')
@@ -129,8 +130,18 @@ def main(file_path, level):
                 multiline_code = True
                 add_header = ""
                 codename = line[3:].strip()
-                output += prefix + f"```{codename}\n"
+                # vuepress 解析不出c++，要改成cpp
+                if codename == "c++":
+                    codename = "cpp"
                 prefix = " " * len(prefix.strip('\n'))
+                if enable_multi_code and codename != 'plain text':
+                    if not multi_code:
+                        multi_code = True
+                        output += f'\n\n{prefix}<CodeGroup>\n{prefix}<CodeGroupItem title="{codename}" active>\n'
+                    else:
+                        output += f'{prefix}<CodeGroupItem title="{codename}">\n'
+
+                output += '\n' + prefix + f"```{codename}\n"
                 continue
             elif multiline_code and line.endswith("```"):
                 # 多行代码块结束
@@ -139,12 +150,20 @@ def main(file_path, level):
                     output += prefix + rest_code + "\n" + prefix + "```" + "\n\n"
                 else:
                     output += prefix + "```" + "\n\n"
+                if enable_multi_code and multi_code:
+                    output += f"{prefix}</CodeGroupItem>\n"
                 multiline_code = False
                 continue
             if not multiline_code:
+                if enable_multi_code and multi_code:
+                    multi_code = False
+                    output = output.rstrip() + "</CodeGroup>\n\n"
                 line = remove_double_square_bracket(alias(highlight(italics(equation(line)))))
 
             output += prefix + add_header + line + '\n'
+
+        if enable_multi_code and multi_code:
+            output = output.rstrip() + "</CodeGroup>\n\n"
 
     output_path = file_path.replace(".txt", ".md")
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -152,31 +171,34 @@ def main(file_path, level):
 
 
 def print_help_and_exit():
-    print("Usage: python roam2md.py LEVEL FILE/DIR ...")
+    print("Usage: python roam2md.py LEVEL ENABLE_MULTI_CODE FILE/DIR ...")
     exit(1)
 
 
 if __name__ == '__main__':
     # main("example/example.txt", 2)
     # exit(0)
-    if len(sys.argv) <= 2:
+    if len(sys.argv) <= 3:
         print_help_and_exit()
 
     level = int(sys.argv[1])
+    enable_multi_code = False
+    if sys.argv[2] == "true":
+        enable_multi_code = True
 
-    for path in sys.argv[2:]:
+    for path in sys.argv[3:]:
         if not os.path.exists(path):
             print(path, "not exists")
             print_help_and_exit()
         if os.path.isfile(path):
             if not path.endswith(".txt"):
                 print_help_and_exit()
-            main(path, level)
+            main(path, level, enable_multi_code)
         elif os.path.isdir(path):
             for filename in os.listdir(path):
                 full_path = os.path.join(path, filename)
                 if os.path.isfile(full_path) and full_path.endswith(".txt"):
-                    main(full_path, level)
+                    main(full_path, level, enable_multi_code)
         else:
             print(path, "not exists")
             print_help_and_exit()
