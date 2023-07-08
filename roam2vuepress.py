@@ -133,8 +133,8 @@ def main(file_path, level, enable_multi_code):
                 # vuepress 解析不出c++，要改成cpp
                 if codename == "c++":
                     codename = "cpp"
-                prefix = " " * len(prefix.strip('\n'))
                 if enable_multi_code and codename != 'plain text':
+                    prefix = " " * len(prefix.strip('\n'))
                     if not multi_code:
                         multi_code = True
                         output += f'\n\n{prefix}<CodeGroup>\n{prefix}<CodeGroupItem title="{codename}" active>\n'
@@ -142,6 +142,7 @@ def main(file_path, level, enable_multi_code):
                         output += f'{prefix}<CodeGroupItem title="{codename}">\n'
 
                 output += '\n' + prefix + f"```{codename}\n"
+                prefix = " " * len(prefix.strip('\n'))
                 continue
             elif multiline_code and line.endswith("```"):
                 # 多行代码块结束
