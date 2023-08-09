@@ -104,6 +104,7 @@ def main(file_path, level):
     current_level = 0
     add_header = ""
     multiline_code = False
+    multiline_equation = False
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip('\n')
@@ -124,6 +125,18 @@ def main(file_path, level):
             if not line.strip() and not multiline_code:
                 # 代码块内空行要保留
                 continue
+
+            if not multiline_equation and line.startswith("$$") and line.count("$$") == 1:
+                multiline_equation = True
+                output += prefix + add_header + line + " "
+                continue
+            elif multiline_equation and line.endswith("$$") and line.count("$$") == 1:
+                multiline_equation = False
+            elif multiline_equation:
+                output += prefix + add_header + line + " "
+                continue
+
+
             if not multiline_code and line.startswith("```"):
                 # 多行代码块开始
                 multiline_code = True

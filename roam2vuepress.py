@@ -64,12 +64,12 @@ def inline_equation(line):
     return "".join(split_list)
 
 
-def basic_inline_format(line, PATTERN, style_name):
+def basic_inline_format(line, PATTERN, left_style, right_style):
     res = re.findall(PATTERN, line)
     if not res:
         return line
     while len(res) > 0:
-        content = f'{style_name}{res[0]}{style_name}'
+        content = f'{left_style}{res[0]}{right_style}'
         line = re.sub(PATTERN, content, line, count=1)
         res = re.findall(PATTERN, line)
     return line
@@ -77,12 +77,12 @@ def basic_inline_format(line, PATTERN, style_name):
 
 def highlight(line):
     """替换高亮"""
-    return basic_inline_format(line, HIGHLIGHT_PATTERN, "==")
+    return basic_inline_format(line, HIGHLIGHT_PATTERN, "<mark>", "</mark>")
 
 
 def italics(line):
     """"替换斜体"""
-    return basic_inline_format(line, ITALICS_PATTERN, "*")
+    return basic_inline_format(line, ITALICS_PATTERN, "*", "*")
 
 
 def split_prefix_content(line):
@@ -104,6 +104,7 @@ def main(file_path, level, enable_multi_code):
     add_header = ""
     multiline_code = False
     multi_code = False # 多代码块组合
+    multiline_equation = False
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip('\n')
@@ -125,6 +126,17 @@ def main(file_path, level, enable_multi_code):
             if not line.strip() and not multiline_code:
                 # 代码块内空行要保留
                 continue
+
+            if not multiline_equation and line.startswith("$$") and line.count("$$") == 1:
+                multiline_equation = True
+                output += prefix + add_header + line + " "
+                continue
+            elif multiline_equation and line.endswith("$$") and line.count("$$") == 1:
+                multiline_equation = False
+            elif multiline_equation:
+                output += prefix + add_header + line + " "
+                continue
+
             if not multiline_code and line.startswith("```"):
                 # 多行代码块开始
                 multiline_code = True
@@ -134,10 +146,11 @@ def main(file_path, level, enable_multi_code):
                 if codename == "c++":
                     codename = "cpp"
                 if enable_multi_code and codename != 'plain text':
+                    first_prefix = prefix # 第一个保持原有的格式「- 」，其它不需要，用空格
                     prefix = " " * len(prefix.strip('\n'))
                     if not multi_code:
                         multi_code = True
-                        output += f'\n\n{prefix}<CodeGroup>\n{prefix}<CodeGroupItem title="{codename}" active>\n'
+                        output += f'\n\n{first_prefix}<CodeGroup>\n{prefix}<CodeGroupItem title="{codename}" active>\n'
                     else:
                         output += f'{prefix}<CodeGroupItem title="{codename}">\n'
 
