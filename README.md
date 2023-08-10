@@ -27,8 +27,11 @@ roam2md主要是把Roam Research的笔记转换为显示无误的markdown笔记
 * 超链接
 
 # 测试支持app或网站
-* mweb
-* csdn
+* mweb: roam2md
+* csdn: roam2md
+* leetcode: roam2leetcode
+* vuepress: roam2vuepress
+* github: roam2github
 
 # 依赖
 python >= 3.7
